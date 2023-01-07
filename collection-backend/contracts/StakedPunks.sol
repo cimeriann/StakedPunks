@@ -55,6 +55,62 @@ contract StakedPunks is ERC721Enumerable, Ownable {
     function startPresale() {
         presaleStarted = true;
 
-        block.timestamp + 5 minutes;
+        presaleEnded = block.timestamp + 5 minutes;
     }
+
+    function presaleMint() public payable onlyWhenNotPaused {
+        require(
+            presaleStarted && block.timestamp < presaleEnded,
+            "Presale is not running"
+        );
+        require(
+            whitelistl.whitelistedAddresses(msg.sender),
+            "you are not whitelisted"
+        );
+        require(tokenIds < maxTokenIds, "exceeded maximum StakedPunks supply");
+        require(msg.value >= _price, "Ether not sufficient");
+        tokenIds += 1;
+
+        _safeMint(msg.sender, tokenIds);
+    }
+
+    /**
+     * @dev mint allows a user to mint one NFT per transaction after the presale
+     */
+    function mint() public payable onlyWhenNotPaused {
+        require(
+            presaleStarted && block.timestamp >= presaleEnded,
+            "Presale has not ended yet"
+        );
+        require(msg.value >= _price, "Eth sent too low");
+        require(tokenIds <= maxTokenIds, "Exceeded maximum StakedPunks supply");
+        tokenIds += 1;
+        _safeMint(msg.sender, tokenIds)
+    }
+    /**
+     * @dev _baseURI overrides the Openzeppelin's ERC721 implementation which by 
+     * default returns an empty string for the baseURI
+     */
+    function _baseURI() internal view virtual override returns (string memory){
+        return _baseTokenURI;
+    }
+
+    /**
+     * @dev setPaused pauses or unpauses contract
+     */
+    function setPaused(bool val) public onlyOwner{
+        _paused = val;
+    }
+    /**
+     * @dev withdraw sends all eth in smart contract to contract owner
+     */
+    function withdraw() public onlyOwner{
+        address _owner = owner();
+        uint256 amount = address(this).balance;
+        (bool sent, ) = _owner.call{value: amount}("");
+        require(sent, "Failed to withdraw eth")
+    }
+    receive() external payable {}
+
+    fallback() external payable {}
 }
