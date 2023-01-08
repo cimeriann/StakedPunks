@@ -52,7 +52,7 @@ contract StakedPunks is ERC721Enumerable, Ownable {
     /**
      * @dev startPresale starts a presale for the whitelisted addresses
      */
-    function startPresale() {
+    function startPresale() public onlyOwner {
         presaleStarted = true;
 
         presaleEnded = block.timestamp + 5 minutes;
@@ -64,7 +64,7 @@ contract StakedPunks is ERC721Enumerable, Ownable {
             "Presale is not running"
         );
         require(
-            whitelistl.whitelistedAddresses(msg.sender),
+            whitelist.whitelistedAddresses(msg.sender),
             "you are not whitelisted"
         );
         require(tokenIds < maxTokenIds, "exceeded maximum StakedPunks supply");
@@ -85,31 +85,34 @@ contract StakedPunks is ERC721Enumerable, Ownable {
         require(msg.value >= _price, "Eth sent too low");
         require(tokenIds <= maxTokenIds, "Exceeded maximum StakedPunks supply");
         tokenIds += 1;
-        _safeMint(msg.sender, tokenIds)
+        _safeMint(msg.sender, tokenIds);
     }
+
     /**
-     * @dev _baseURI overrides the Openzeppelin's ERC721 implementation which by 
+     * @dev _baseURI overrides the Openzeppelin's ERC721 implementation which by
      * default returns an empty string for the baseURI
      */
-    function _baseURI() internal view virtual override returns (string memory){
+    function _baseURI() internal view virtual override returns (string memory) {
         return _baseTokenURI;
     }
 
     /**
      * @dev setPaused pauses or unpauses contract
      */
-    function setPaused(bool val) public onlyOwner{
+    function setPaused(bool val) public onlyOwner {
         _paused = val;
     }
+
     /**
      * @dev withdraw sends all eth in smart contract to contract owner
      */
-    function withdraw() public onlyOwner{
+    function withdraw() public onlyOwner {
         address _owner = owner();
         uint256 amount = address(this).balance;
         (bool sent, ) = _owner.call{value: amount}("");
-        require(sent, "Failed to withdraw eth")
+        require(sent, "Failed to withdraw eth");
     }
+
     receive() external payable {}
 
     fallback() external payable {}
