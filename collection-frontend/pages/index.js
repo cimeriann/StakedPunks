@@ -160,8 +160,122 @@ export default function Home() {
   /**
    * getProviderOrSigner: returns a Provider or signer object
    */
-  const getProviderOrSigner = async () => {
+  const getProviderOrSigner = async (needSigner = false) => {
     const provider = await Web3ModalRef.current.connect();
     const web3Provider = new providers.Web3Provider(provider);
+
+    const { chainId } = await web3Provider.getNetwork();
+    if (chainId !== 5) {
+      window.alert("Change the network to Goerli");
+      throw new Error("Change network to Goerli");
+    }
+    if (needSigner) {
+      const signer = web3Provider.getSigner();
+      return signer;
+    }
+    return web3Provider;
   };
+  useEffect(() => {
+    if (!walletConnected) {
+      Web3ModalRef.current = new Web3Modal({
+        network: "goerli",
+        providerOptions: {},
+        disableInjectedProvider: false,
+      });
+      connectWallet();
+
+      //check if presale has started or ended
+      const _presaleStarted = checkPresaleStarted();
+      if (_presaleStarted) {
+        checkPresaleEnded();
+      }
+      getTokenIdsMinted();
+
+      //interval which gets called every 5 seconds to check if presale has ended
+      const presaleEndedInterval = setInterval(async function () {
+        const _presaleStarted = await checkPresaleStarted();
+        if (_presaleStarted) {
+          const _presaleEnded = checkPresaleEnded();
+          if (_presaleEnded) {
+            clearInterval(presaleEndedInterval);
+          }
+        }
+      }, 5 * 1000);
+    }
+  }, [walletConnected]);
+
+  /**
+   * renderButton: returns a button based on the state of the dapp
+   */
+  const renderButton = () => {
+    if (!walletConnected) {
+      return (
+        <button onClick={connectWallet} className={styles.button}>
+          Connect Wqallet
+        </button>
+      );
+    }
+    if (loading) {
+      return <button className={styles.button}>Loading...</button>;
+    }
+    if (isOwner && !presaleStarted) {
+      return (
+        <button onClick={startPresale} className={styles.button}>
+          Start Presale!
+        </button>
+      );
+    }
+    if (!presaleStarted) {
+      return (
+        <div>
+          <div className={styles.description}>Presale hasn't started</div>
+        </div>
+      );
+    }
+    if (presaleStarted && !presaleEnded) {
+      return (
+        <div>
+          <div className={styles.description}>
+            Presale has started!! If your address is whitelisted, Mint a Staked
+            Punk 😾
+          </div>
+          <button onClick={presaleMint} className={styles.button}>
+            Presale Mint 🚀
+          </button>
+        </div>
+      );
+    }
+    if (presaleStarted && presaleEnded) {
+      return (
+        <button className={styles.button} onClick={publicMint}>
+          Public Mint 🚀
+        </button>
+      );
+    }
+  };
+  return (
+    <div>
+      <Head>
+        <title>Staked Punks</title>
+        <meta name="description" content="Whitelist-Dapp" />
+        <link rel="idon" href="/favicon.ico" />
+      </Head>
+      <div className={styles.main}>
+        <div>
+          <h1 className={styles.title}>Welcome to Staked Punks!</h1>
+          <div className={styles.description}>
+            We are the first to bring you a type of NFTs that can be staked on
+            compatible chains.
+          </div>
+          <div className={styles.description}>
+            {tokenIdsMinted}/20 tokens have been minted.
+          </div>
+          {renderButton()}
+        </div>
+        <div>
+          <img className={styles.image} />
+        </div>
+      </div>
+    </div>
+  );
 }
