@@ -264,8 +264,8 @@ export default function Home() {
         <div>
           <h1 className={styles.title}>Welcome to Staked Punks!</h1>
           <div className={styles.description}>
-            We are the first to bring you a type of NFTs that can be staked on
-            compatible chains.
+            A collection of a type of NFTs that can be staked on compatible
+            chains.
           </div>
           <div className={styles.description}>
             {tokenIdsMinted}/20 tokens have been minted.
