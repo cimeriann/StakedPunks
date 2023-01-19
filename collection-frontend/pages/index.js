@@ -273,9 +273,12 @@ export default function Home() {
           {renderButton()}
         </div>
         <div>
-          <img className={styles.image} />
+          <img className={styles.image} src="./stakedpunks/0.svg" />
         </div>
       </div>
+      <footer className={styles.footer}>
+        Made with &#10084; by agilescrumopschain
+      </footer>
     </div>
   );
 }
